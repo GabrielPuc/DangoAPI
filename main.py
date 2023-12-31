@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response, Path
+from fastapi import FastAPI, Response
 from pymongo import MongoClient
 import os
 from dotenv import load_dotenv
@@ -18,46 +18,44 @@ collections_available = database.list_collection_names()
 
 
 @app.get(
-    "/all",
-    response_description="default response when no language was provided",
+    "/configs",
+    response_description="configs for all languages in app",
 )
-async def retrieve_all():
-    return Response(content="no language provided",status_code=400)
+async def retrieve_all_configs():
+    collection = database.get_collection("configs")
+    cursor = collection.find({}, {'_id': False})
+    list_cur = list(cursor)
+    return JSONResponse(content=list_cur,status_code=200)
 
 @app.get(
-    "/all/{language}",
-    response_description="all content for a given language",
+    "/config/{language}",
+    response_description="configs for a specific language",
 )
-async def retrieve_all(language):
+async def retrieve_config_for_(language):
     if language in collections_available:
-        collection = database.get_collection(language)
-        cursor = collection.find({}, {'_id': False})
-        list_cur = list(cursor)
-        return JSONResponse(content=list_cur,status_code=200)
+        collection = database.get_collection("configs")
+        cursor = collection.find_one({"language":language}, {'_id': False})
+        return cursor
     else:
         return Response(status_code=404)
 
 @app.get(
     "/{language}/{type}",
-    response_description="specific content given a language and a valid name",
+    response_description="return content of a specific language",
 )
-async def retrieve_only(language,type):
+async def retrieve_only_(language,type):
     if language in collections_available:
         collection = database.get_collection(language)
-        cursor = collection.find_one({"name":type}, {'_id': False})
-        if cursor == None:
-            return Response(status_code=404)
+        if type == "all":
+            cursor = collection.find({}, {'_id': False})
+            list_cur = list(cursor)
+            return JSONResponse(content=list_cur,status_code=200)
         else:
-            return cursor
+            cursor = collection.find_one({"name":type}, {'_id': False})
+            if cursor == None:
+                return Response(status_code=404)
+            else:
+                return cursor
     else:
         return Response(status_code=404)
-    
-@app.get(
-    "/configs",
-    response_description="configs for all languages in app",
-)
-async def retrieve_all():
-    collection = database.get_collection("configs")
-    cursor = collection.find({}, {'_id': False})
-    list_cur = list(cursor)
-    return JSONResponse(content=list_cur,status_code=200)
+
