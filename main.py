@@ -38,6 +38,19 @@ async def retrieve_config_for_(language):
         return cursor
     else:
         return Response(status_code=404)
+    
+@app.get(
+    "/versions/{language}",
+    response_description="return content of a specific language",
+)
+async def retrieve_content_versions_for_(language):
+    if language in collections_available:
+        collection = database.get_collection(language)
+        cursor = collection.find({}, {'_id': False, 'content':False})
+        list_cur = list(cursor)
+        return JSONResponse(content=list_cur,status_code=200)
+    else:
+        return Response(status_code=404)    
 
 @app.get(
     "/{language}/{type}",
