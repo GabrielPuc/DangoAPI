@@ -60,7 +60,7 @@ async def retrieve_only_(language,type):
     if language in collections_available:
         collection = database.get_collection(language)
         if type == "all":
-            cursor = collection.find({}, {'_id': False})
+            cursor = collection.find({ 'stand_alone': { '$not': { '$eq': True } } }, {'_id': False})
             list_cur = list(cursor)
             return JSONResponse(content=list_cur,status_code=200)
         else:
